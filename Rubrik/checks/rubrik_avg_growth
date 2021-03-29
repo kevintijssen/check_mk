@@ -1,0 +1,17 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+def inventory_rubrik_avg_growth(info):
+    return[ (None, {}) ]
+
+def check_rubrik_avg_growth(item, params, info):
+    growth = float(info[0][0])/10 ** 12
+    infotext = "%.2f TB per day" % (growth)
+    return 0, infotext
+
+check_info["rubrik_avg_growth"] = {
+    "check_function"          : check_rubrik_avg_growth,
+    "inventory_function"      : inventory_rubrik_avg_growth,
+    "service_description"     : "Rubrik Average Growth",
+    "has_perfdata"            : False,
+}

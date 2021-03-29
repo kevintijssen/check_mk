@@ -1,0 +1,25 @@
+factory_settings["ms_logins_default_levels"] = {
+ "verbose" : (True)
+}
+
+def inventory_ms_logins(info):
+    return[ (None, {}) ]
+
+def check_ms_logins(no_item, params, info):
+    for active, disconnected, active_users, disconnected_users in info:
+        verbose = params[0]
+        perfdata = [ ( "Active", active),
+                    ( " Disconnected", disconnected) ]
+        if verbose:
+            return 0, "Active Users: %s; Disconnected Users: %s" % (active_users, disconnected_users), perfdata
+        else:
+            return 0, "Active Users: %s; Disconnected Users: %s" % (active, disconnected), perfdata
+
+check_info["ms_logins"] = {
+    "check_function"           : check_ms_logins,
+    "inventory_function"       : inventory_ms_logins,
+    "default_levels_variable"  : "ms_logins_default_levels",
+    "group"                    : "ms_logins",
+    "service_description"      : "MS User Information",
+    "has_perfdata"             : True,}
+

@@ -1,0 +1,28 @@
+def inventory_win_defender(info):
+        return[ (None, {}) ]
+
+def check_win_defender(no_item, params, info):
+        for rtprot_status, nis_age, as_age, av_age in info:
+                age = 0
+                if nis_age > 2:
+                        age + 1
+                if as_age > 2:
+                        age + 1
+                if av_age > 2:
+                        age + 1
+                if rtprot_status == "False":
+                        if age > 0:
+                                return 2, "RealTime Protection: Disabled(!!), Anti-virus Database: Out-of-Date(!!)"
+                        else:
+                                return 2, "RealTime Protection: Disabled(!!), Anti-virus Database: Up-of-Date"
+                else:
+                        if age > 0:
+                                return 2, "RealTime Protection: Enabled, Anti-virus Database: Out-of-Date(!!)"
+                        else:
+                                return 0, "RealTime Protection: Enabled, Anti-virus Database: Up-of-Date"
+
+check_info["win_defender"] = {
+    "check_function"        : check_win_defender,
+    "inventory_function"    : inventory_win_defender,
+    "service_description"   : "Windows Defender",
+    "has_perfdata"          : False,}

@@ -1,0 +1,15 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+def inventory_rubrik_clsinfo(info):
+    return[ (None, {}) ]
+
+def check_rubrik_clsinfo(item, params, info):
+    for id, version in info:
+        return 0, "ID: %s, Version: %s" % (id, version)
+
+check_info["rubrik_clsinfo"] = {
+    "check_function"          : check_rubrik_clsinfo,
+    "inventory_function"      : inventory_rubrik_clsinfo,
+    "service_description"     : "Rubrik Cluster Information",
+}

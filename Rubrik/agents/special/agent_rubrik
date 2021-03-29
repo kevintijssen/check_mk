@@ -1,0 +1,186 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+import urllib2, ssl, base64, json, sys, getopt, os, datetime
+
+CMD_NAME = os.path.basename(sys.argv[0])
+
+def error(message):
+    print "%s: %s" % (CMD_NAME, message)
+    print "Try '%s --help' for more information." % (CMD_NAME)
+    sys.exit(1)
+
+def usage():
+    print """Usage: %s [OPTION] -C cluster -U username -P password
+
+    -C, --cluster           Cluster IP or FQDN
+    -U, --username          Username to connect with
+    -P, --password          Password for user
+
+    -G, --growth            Display Average Growth per day
+    -R, --runway            Display Estimated Runway
+    -S, --sys_storage       Display System Storage Information
+
+    -h, --help Display this help and exit
+
+    """ % CMD_NAME
+
+class RUBRIK_REST_API():
+
+  def __init__(self, cluster, username, password):
+
+    self.cluster = cluster
+    self.username = username
+    self.password = password
+    self.base_rubrik_url = (
+        "https://%s/api/v1" % (self.cluster,))
+    self.internal_rubrik_url = (
+        "https://%s/api/internal" % (self.cluster,))
+
+  def auth(self, username, password):
+
+    auth = base64.encodestring("%s:%s" % (username, password)).strip()
+    return {'Authorization': "Basic " + auth}
+
+  def get_server_session(self, url):
+
+    context = ssl._create_unverified_context()
+    headers = self.auth(self.username, self.password)
+    request = urllib2.Request(url, headers=headers)
+    try:
+        session = urllib2.urlopen(request, context=context)
+    except urllib2.HTTPError, e:
+        print str(e.reason) + " - " + str(e.code) + ". That's an error."
+        sys.exit()
+
+    return json.load(session)
+
+  def _url(self, base, path):
+
+    """
+    Helper method to generate a URL from a base, relative path, and dictionary
+    of query parameters.
+    """
+    url = "%s/%s" % (base, path)
+    parameters = self.parameters
+    if parameters is not None:
+        url = "%s?%s" % (url, "&".join(["%s" % par
+                                        for par in parameters]))
+    return url
+
+  def prism_url(self, path):
+    return self._url(self.base_rubrik_url, path)
+
+  def internal_url(self, path):
+    return self._url(self.internal_rubrik_url, path)
+
+  def cluster_info(self):
+    self.parameters = None
+    url = self.prism_url("cluster/me")
+    cls = self.get_server_session(url)
+
+    print "<<<rubrik_clsinfo>>>"
+    print cls["id"], cls["version"]
+
+  def avg_growth_info(self):
+    self.parameters = None
+    url = self.internal_url("stats/average_storage_growth_per_day")
+    growth = self.get_server_session(url)
+
+    print "<<<rubrik_avg_growth>>>"
+    print growth["bytes"]
+
+  def node_info(self):
+    self.parameters = None
+    url = self.internal_url("node")
+    nodes = self.get_server_session(url)
+
+    print "<<<rubrik_nodes>>>"
+    for node in nodes["data"]:
+      print node['ipAddress'], node['id'], node['status']
+
+  def runway_info(self):
+    self.parameters = None
+    url = self.internal_url("stats/runway_remaining")
+    runway = self.get_server_session(url)
+
+    print "<<<rubrik_runway>>>"
+    print runway["days"]
+
+  def sys_storage_info(self):
+    self.parameters = None
+    url = self.internal_url("stats/system_storage")
+    str = self.get_server_session(url)
+
+    print "<<<rubrik_sysstr_info>>>"
+    print str["total"], str["snapshot"], str["available"]
+
+def main():
+    #Create empty paramters
+    cluster = None
+    username = None
+    password = None
+    avg_growth = False
+    nodes = False
+    runway = False
+    sys_storage = False
+
+
+
+    #Check is paramater are entered
+    if len(sys.argv) < 2:
+        usage()
+        sys.exit(1)
+    try:
+        opts, args = getopt.getopt(sys.argv[1:],"C:U:P:GNRS",["cluster=","username=","password=","avg_growth","nodes","runway","sys_storage","help"])
+
+    except getopt.GetoptError, (msg, opt):
+        error(msg)
+
+    for option, argument in opts:
+        if option in ("-h", "--help"):
+            usage()
+            sys.exit(0)
+        elif option in ("-C", "--cluster"):
+            cluster = argument
+        elif option in ("-U", "--username"):
+            username = argument
+        elif option in ("-P", "--password"):
+            password = argument
+        elif option in ("-G", "--avg_growth"):
+            avg_growth = True
+        elif option in ("-N", "--nodes"):
+            nodes = True
+        elif option in ("-R", "--runway"):
+            runway = True
+        elif option in ("-S", "--sys_storage"):
+            sys_storage = True
+        else:
+            usage()
+
+    # Check is Cluster, Username, Password is not None
+    if cluster is None:
+        error("missing cluster argument")
+    if username is None:
+        error("missing username argument")
+    if password is None:
+        error("missing password argument")
+
+    # Load parameter in to Class
+    x = RUBRIK_REST_API(cluster, username, password)
+
+    # Show Cluster information
+    x.cluster_info()
+
+    # Check for additional info
+    if avg_growth is True:
+        x.avg_growth_info()
+    if nodes is True:
+        x.node_info()
+    if runway is True:
+        x.runway_info()
+    if sys_storage is True:
+        x.sys_storage_info()
+
+if __name__ == "__main__":
+  sys.exit(main())

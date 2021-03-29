@@ -1,0 +1,13 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+def bake_win_fw(opsys, conf, conf_dir, plugins_dir):
+    if conf:
+        shutil.copy2(local_agents_dir + "/plugins/win_fw.vbs",
+                     plugins_dir + "/win_fw.vbs")
+
+
+bakery_info["win_fw"] = {
+    "bake_function" : bake_win_fw,
+    "os"            : [ "windows", ],
+}

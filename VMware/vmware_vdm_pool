@@ -1,0 +1,127 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+#################################################################
+# Created By: Kevin Tijssen (Sligro Food Group B.V.)            #
+# Created On: 15-12-2016                                        #
+#################################################################
+
+factory_settings["vmware_vdm_pool_default_levels"] = {
+ "availableDesktops" : (10, 1),
+ "errorDesktops" : (3, 5),
+ "usedDesktops" : (3, 5),
+ "maintenaceDesktops" : (3, 5)
+}
+
+def inventory_vmware_vdm_pool(info):
+        inventory = []
+        for poolname, status, type, desktopcount, desktopmax, desktopavailable, desktopprovisioning, desktoperror, desktopalreadyused, desktopmaintenance, \
+            sessioncount, sessionpcoip, sessionrdp, sessionblast, sessiondisconnected in info:
+                inventory.append((poolname, None))
+        return inventory
+
+def check_vmware_vdm_pool(item, params, info):
+        for poolname, status, type, desktopcount, desktopmax, desktopavailable, desktopprovisioning, desktoperror, desktopalreadyused, desktopmaintenance, \
+            sessioncount, sessionpcoip, sessionrdp, sessionblast, sessiondisconnected in info:
+                desktopalreadyused = float(desktopalreadyused)
+                desktoperror = int(desktoperror)
+                desktopmaintenance = int(desktopmaintenance)
+                desktopavailable = int(desktopavailable)
+                if poolname == item:
+                        desktopwarn, desktopcrit = params["availableDesktops"]
+                        desktoperrorwarn, desktoperrorcrit = params["errorDesktops"]
+                        desktopalreadyusedwarn, desktopalreadyusedcrit = params["usedDesktops"]
+                        desktopmaintenancewarn, desktopmaintenancecrit = params["maintenaceDesktops"]
+                        desktopwarn = int(round((float(desktopcount)/100)*float(desktopwarn)))
+                        desktopcrit = int(round((float(desktopcount)/100)*float(desktopcrit))) 
+
+# +------------------------------------------------------------------+
+# |          _____ _     ___    _  _____ ___ _   _  ____             |
+# |         |  ___| |   / _ \  / \|_   _|_ _| \ | |/ ___|            |
+# |         | |_  | |  | | | |/ _ \ | |  | ||  \| | |  _             |
+# |         |  _| | |__| |_| / ___ \| |  | || |\  | |_| |            |
+# |         |_|   |_____\___/_/   \_\_| |___|_| \_|\____|            |
+# |                                                                  |
+# +------------------------------------------------------------------+
+
+                        if type == "Provisioned":
+                                perfdata = [ ("vmware_vdm_pool_desktops", desktopcount, "", "", 0, desktopmax),
+                                             ("vmware_vdm_pool_available_desktops", desktopavailable, desktopwarn, desktopcrit, 0, desktopmax),
+                                             ("vmware_vdm_pool_provisioning_desktops", desktopprovisioning, "", "", 0, desktopmax),
+                                             ("vmware_vdm_pool_error_desktops", desktoperror, "", "", 0, desktopmax),
+                                             ("vmware_vdm_pool_already_used_desktops", desktopalreadyused, "", "", 0, desktopmax),
+                                             #("vmware_vdm_pool_sessions", sessioncount),
+                                             ("vmware_vdm_pool_pcoip_sessions", sessionpcoip, "", "", 0, sessioncount),
+                                             ("vmware_vdm_pool_rdp_sessions", sessionrdp, "", "", 0, sessioncount),
+                                             ("vmware_vdm_pool_blast_sessions", sessionblast, "", "", 0, sessioncount),
+                                             ("vmware_vdm_pool_disconnected_sessions", sessiondisconnected, "", "", 0, sessioncount) ]
+                                if status == "21":
+                                        return 2, "Pool is disabled", perfdata
+                                if status == "22":
+                                        return 2, "Provisioning is disabled", perfdata
+                                if status == "23":
+                                        return 2, "vCenter provisioning is disabled", perfdata
+                                if desktopavailable <= desktopcrit:
+                                        return 2, "%s available desktop(s), %s are being provisioned" % (desktopavailable, desktopprovisioning), perfdata
+                                if desktopavailable <= desktopwarn:
+                                        return 1, "%s available desktop(s), %s are being provisioned" % (desktopavailable, desktopprovisioning), perfdata
+                                if desktopalreadyused > desktopalreadyusedcrit:
+                                        return 2, "%s already used desktop(s)" % (desktopalreadyused), perfdata
+                                if desktopalreadyused > desktopalreadyusedwarn:
+                                        return 1, "%s already used desktop(s)" % (desktopalreadyused), perfdata
+                                if desktoperror > desktoperrorcrit:
+                                        return 2, "%s error desktop(s)" % (desktoperror), perfdata
+                                if desktoperror > desktoperrorwarn:
+                                        return 1, "%s error desktop(s)" % (desktoperror), perfdata
+                                if desktopmaintenance > desktopmaintenancecrit:
+                                        return 2, "%s maintenance desktop(s)" % (desktopmaintenance), perfdata
+                                if desktopmaintenance > desktopmaintenancewarn:
+                                        return 1, "%s maintenance desktop(s)" % (desktopmaintenance), perfdata
+                                if status == "0":
+                                        return 0, "Pool is functioning normally", perfdata
+
+
+# +------------------------------------------------------------------------+
+# |   ____  ____  ____       __  __  __    _    _   _ _   _   _    _       |
+# |  |  _ \|  _ \/ ___|     / / |  \/  |  / \  | \ | | | | | / \  | |      |
+# |  | |_) | | | \___ \    / /  | |\/| | / _ \ |  \| | | | |/ _ \ | |      |
+# |  |  _ <| |_| |___) |  / /   | |  | |/ ___ \| |\  | |_| / ___ \| |___   |
+# |  |_| \_\____/|____/  /_/    |_|  |_/_/   \_\_| \_|\___/_/   \_\_____|  |
+# |                                                                        |
+# +------------------------------------------------------------------------+
+
+                        if (type == "TerminalService") or (type == "Manual"):
+                                perfdata = [ ("vmware_vdm_pool_sessions", sessioncount),
+                                             ("vmware_vdm_pool_pcoip_sessions", sessionpcoip, "", "", 0, sessioncount),
+                                             ("vmware_vdm_pool_rdp_sessions", sessionrdp, "", "", 0, sessioncount),
+                                             ("vmware_vdm_pool_blast_sessions", sessionblast, "", "", 0, sessioncount),
+                                             ("vmware_vdm_pool_disconnected_sessions", sessiondisconnected, "", "", 0, sessioncount) ]
+                                if status == "21":
+                                        return 2, "Pool is disabled", perfdata
+                                if status == "0":
+                                        return 0, "Pool is functioning normally", perfdata
+
+# +------------------------------------------------------------------+
+# |           _   _ _   _ _  ___   _  _____        ___   _           |
+# |          | | | | \ | | |/ / \ | |/ _ \ \      / / \ | |          |
+# |          | | | |  \| | ' /|  \| | | | \ \ /\ / /|  \| |          |
+# |          | |_| | |\  | . \| |\  | |_| |\ V  V / | |\  |          |
+# |           \___/|_| \_|_|\_\_| \_|\___/  \_/\_/  |_| \_|          |
+# |                                                                  |
+# +------------------------------------------------------------------+
+
+                        if type == "Unknown":
+                                if status == "31":
+                                        return 3, "Pool not found"
+
+                                if status == "32":
+                                        return 3, "Pool type unknown"
+
+check_info["vmware_vdm_pool"] = {
+    "check_function"           : check_vmware_vdm_pool,
+    "inventory_function"       : inventory_vmware_vdm_pool,
+    "default_levels_variable"  : "vmware_vdm_pool_default_levels",
+    "service_description"      : "VMware View Pool:",
+    "group"                    : "vmware_vdm_pool",
+    "has_perfdata"             : True,
+}

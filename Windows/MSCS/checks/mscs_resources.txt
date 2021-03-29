@@ -1,0 +1,22 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+def inventory_mscs_resources(info):
+        inventory = []
+        for name, state, node in info:
+                inventory.append((name, None))
+        return inventory
+
+def check_mscs_resources(item, params, info):
+        for name, state, node in info:
+                if name == item:
+                        if state == "Online":
+                                return 0, "State: %s, Owner: %s" % (state,node)
+                        else:
+                                return 2, "State: %s, Owner: %s" % (state,node)
+
+check_info["mscs_resources"] = {
+    "check_function"          : check_mscs_resources,
+    "inventory_function"      : inventory_mscs_resources,
+    "service_description"     : "MSCS Resources -",
+}

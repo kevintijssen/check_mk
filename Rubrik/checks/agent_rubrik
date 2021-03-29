@@ -1,0 +1,29 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+#################################################################
+# Created By: Kevin Tijssen                                     #
+# Created On: 28-02-2017                                        #
+#################################################################.
+
+def agent_rubrik_arguments(params, hostname, ipaddress):
+    args = ''
+
+    args = ''
+
+    if params["cluster"] == True:
+        args += " -C " + quote_shell_string("%s" % (ipaddress))
+    else:
+        args += " -C " + quote_shell_string("%s" % (params["cluster"]))
+    args += " -U " + quote_shell_string(params["username"])
+    args += " -P " + quote_shell_string(params["password"])
+    if params["growth"] == True:
+        args += " -G"
+    if params["runway"] == True:
+        args += " -R"
+    if params["sys_storage"] == True:
+        args += " -S"
+
+    return args
+
+special_agent_info['rubrik'] = agent_rubrik_arguments

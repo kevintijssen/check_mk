@@ -1,0 +1,46 @@
+win_fw_default_values = (0,1)
+
+# the inventory function
+def inventory_win_fw(info):
+#   print info
+   inventory = []
+   inventory.append( ("Domain", "win_fw_default_values") )
+   inventory.append( ("Private", "win_fw_default_values") )
+   inventory.append( ("Public", "win_fw_default_values") )
+   return inventory
+
+# the check function
+def check_win_fw(item, params, info):
+   warn, crit = params
+   dstat = info[2][1]
+   prstat = info[5][1]
+   pustat = info[8][1]
+   domain = "Domain"
+   private = "Private"
+   public = "Public"
+
+   if domain == item:
+      if dstat == "ON":
+         return(0, "OK - Windows Firewall State: ON")
+      else:
+         return(2, "CRITICAL - Windows Firewall State: OFF")
+   elif private == item:
+      if prstat == "ON":
+         return (0, "OK - Windows Firewall State: ON")
+      else:
+         return (2, "CRITICAL - Windows Firewall State: OFF")
+   elif public == item:
+      if pustat == "ON":
+         return (0, "OK - Windows Firewall State: ON")
+      else:
+         return (2, "CRITICAL - Windows Firewall State: OFF")
+   else:
+      return (3, "!!invalid output from agent!!")
+
+# declare the check to Check_MK
+check_info['win_fw'] = {
+    "check_function"          : check_win_fw,
+    "inventory_function"      : inventory_win_fw,
+    "service_description"     : "Firewall Profile: ",
+    "has_perfdata"            : False,
+}

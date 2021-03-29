@@ -1,0 +1,17 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+def inventory_rubrik_runway(info):
+    return[ (None, {}) ]
+
+def check_rubrik_runway(item, params, info):
+    runway = info[0][0]
+    infotext = "Estimated %s days remaining" % (runway)
+    return 0, infotext
+
+check_info["rubrik_runway"] = {
+    "check_function"          : check_rubrik_runway,
+    "inventory_function"      : inventory_rubrik_runway,
+    "service_description"     : "Rubrik Runway",
+    "has_perfdata"            : False,
+}

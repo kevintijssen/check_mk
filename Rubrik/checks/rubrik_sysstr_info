@@ -1,0 +1,22 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+def inventory_rubrik_sysstr_info(info):
+    return[ (None, {}) ]
+
+def check_rubrik_sysstr_info(item, params, info):
+    for total, used, available in info:
+        total = float(total)/10 ** 12
+        used = float(used)/10 ** 12
+        available = float(available)/10 ** 12
+        usedpercent = (used/total)*100
+
+        infotext = "%.2f% % Used (%.2f/%.2f TB)" % (usedpercent, used, total)
+        return 0, infotext
+
+check_info["rubrik_sysstr_info"] = {
+    "check_function"          : check_rubrik_sysstr_info,
+    "inventory_function"      : inventory_rubrik_sysstr_info,
+    "service_description"     : "Rubrik System Storage",
+    "has_perfdata"            : False,
+}

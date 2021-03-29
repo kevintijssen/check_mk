@@ -1,0 +1,24 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+def inventory_mscs_nodes(info):
+        inventory = []
+        for name, state in info:
+                inventory.append((name, None))
+        return inventory
+
+def check_mscs_nodes(item, params, info):
+        for name, state in info:
+                if name == item:
+                        if state == "Down":
+                                return 2, "Node is Down"
+                        elif state == "Paused":
+                                return 1, "Node is Paused"
+                        else:
+                                return 0, "Node is Up and running"
+
+check_info["mscs_nodes"] = {
+    "check_function"          : check_mscs_nodes,
+    "inventory_function"      : inventory_mscs_nodes,
+    "service_description"     : "MSCS Nodes -",
+}

@@ -1,0 +1,16 @@
+def inventory_windows_os_info(info):
+        for version, sp, serial in info:
+                return[ (None, {}) ]
+
+def check_windows_os_info(item, _no_params, info):
+        for version, sp, serial in info:
+                version = version.replace("_", " ")
+		sp = sp.replace("_", " ")
+                return 0, "%s (%s), S/N: %s" % (version, sp, serial)
+
+check_info["windows_os_info"] = {
+    "check_function"        : check_windows_os_info,
+    "inventory_function"    : inventory_windows_os_info,
+    "service_description"   : "Windows OS Info",
+    "has_perfdata"          : False,
+}
